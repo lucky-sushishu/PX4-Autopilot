@@ -31,8 +31,8 @@
  *
  ****************************************************************************/
 
-#ifndef OPEN_DRONE_ID_LOCATION_HPP
-#define OPEN_DRONE_ID_LOCATION_HPP
+#ifndef OPEN_DRONE_ID_SYSTEM_HPP
+#define OPEN_DRONE_ID_SYSTEM_HPP
 
 #include <uORB/topics/home_position.h>
 #include <uORB/topics/sensor_gps.h>
@@ -41,24 +41,24 @@
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_status.h>
 
-class MavlinkStreamOpenDroneIdLocation : public MavlinkStream
+class MavlinkStreamOpenDroneIdSystem : public MavlinkStream
 {
 public:
-	static MavlinkStream *new_instance(Mavlink *mavlink) { return new MavlinkStreamOpenDroneIdLocation(mavlink); }
+	static MavlinkStream *new_instance(Mavlink *mavlink) { return new MavlinkStreamOpenDroneIdSystem(mavlink); }
 
-	static constexpr const char *get_name_static() { return "OPEN_DRONE_ID_LOCATION"; }
-	static constexpr uint16_t get_id_static() { return MAVLINK_MSG_ID_OPEN_DRONE_ID_LOCATION; }
+	static constexpr const char *get_name_static() { return "OPEN_DRONE_ID_SYSTEM"; }
+	static constexpr uint16_t get_id_static() { return MAVLINK_MSG_ID_OPEN_DRONE_ID_SYSTEM; }
 
 	const char *get_name() const override { return get_name_static(); }
 	uint16_t get_id() override { return get_id_static(); }
 
 	unsigned get_size() override
 	{
-		return MAVLINK_MSG_ID_OPEN_DRONE_ID_LOCATION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+		return MAVLINK_MSG_ID_OPEN_DRONE_ID_SYSTEM_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
 	}
 
 private:
-	explicit MavlinkStreamOpenDroneIdLocation(Mavlink *mavlink) : MavlinkStream(mavlink) {}
+	explicit MavlinkStreamOpenDroneIdSystem(Mavlink *mavlink) : MavlinkStream(mavlink) {}
 
 	uORB::Subscription _home_position_sub{ORB_ID(home_position)};
 	uORB::Subscription _vehicle_air_data_sub{ORB_ID(vehicle_air_data)};
@@ -69,7 +69,7 @@ private:
 
 	bool send() override
 	{
-		mavlink_open_drone_id_location_t msg{};
+		mavlink_open_drone_id_system_t msg{};
 		msg.target_component = 0; // 0 for broadcast
 		msg.target_system = 0; // 0 for broadcast
 		// msg.id_or_mac // Only used for drone ID data received from other UAs.
@@ -262,7 +262,7 @@ private:
 		}
 
 		if (updated) {
-			mavlink_msg_open_drone_id_location_send_struct(_mavlink->get_channel(), &msg);
+			mavlink_msg_open_drone_id_system_send_struct(_mavlink->get_channel(), &msg);
 			return true;
 		}
 
@@ -270,4 +270,4 @@ private:
 	}
 };
 
-#endif // OPEN_DRONE_ID_LOCATION_HPP
+#endif // OPEN_DRONE_ID_SYSTEM_HPP
