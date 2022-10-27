@@ -220,23 +220,14 @@ bool MulticopterLandDetector::_get_ground_contact_state()
 	const bool skip_close_to_ground_check = !_dist_bottom_is_observable || !_vehicle_local_position.dist_bottom_valid;
 	_close_to_ground_or_skipped_check = _is_close_to_ground() || skip_close_to_ground_check;
 
-	// When not armed, consider to have ground-contact
-	if (!_armed) {
-		return true;
-	}
-
 	// TODO: we need an accelerometer based check for vertical movement for flying without GPS
-	return _close_to_ground_or_skipped_check && ground_contact && !_horizontal_movement
-	       && !_vertical_movement;
+	return !_armed ||
+	       (_close_to_ground_or_skipped_check && ground_contact && !_horizontal_movement
+		&& !_vertical_movement);
 }
 
 bool MulticopterLandDetector::_get_maybe_landed_state()
 {
-	// When not armed, consider to be maybe-landed
-	if (!_armed) {
-		return true;
-	}
-
 	const hrt_abstime time_now_us = hrt_absolute_time();
 
 	// minimal throttle: initially 10% of throttle range between min and hover
@@ -247,20 +238,19 @@ bool MulticopterLandDetector::_get_maybe_landed_state()
 		sys_min_throttle = (_params.minManThrottle + 0.01f);
 	}
 
+	const bool minimum_thrust = _actuator_controls_throttle <= sys_min_throttle;
+	bool minimum_thrust_for_8_s = false;
+
 	// Check if thrust output is less than the minimum throttle.
-	if (_actuator_controls_throttle <= sys_min_throttle) {
+	if (minimum_thrust) {
 		if (_min_thrust_start == 0) {
 			_min_thrust_start = time_now_us;
 		}
 
+		minimum_thrust_for_8_s = (time_now_us - _min_thrust_start) > 8_s;
+
 	} else {
 		_min_thrust_start = 0;
-		return false;
-	}
-
-
-	if (_freefall_hysteresis.get_state()) {
-		return false;
 	}
 
 	// Next look if vehicle is not rotating (do not consider yaw)
@@ -272,21 +262,24 @@ bool MulticopterLandDetector::_get_maybe_landed_state()
 		max_rotation_threshold *= 2.5f;
 	}
 
-	if (_angular_velocity.xy().norm() > max_rotation_threshold) {
-		_rotational_movement = true;
-		return false;
-
-	} else {
-		_rotational_movement = false;
-	}
+	_angular_velocity.print();
+	printf("norm: %.3f\n", (double)_angular_velocity.xy().norm());
+	_rotational_movement = _angular_velocity.xy().norm() > max_rotation_threshold;
 
 	// If vertical velocity is available: ground contact, no thrust, no movement -> landed
-	if (((time_now_us - _vehicle_local_position.timestamp) < 1_s) && _vehicle_local_position.v_z_valid) {
+	const bool local_position_updated = (time_now_us - _vehicle_local_position.timestamp) < 1_s;
+	const bool vertical_velocity_valid = _vehicle_local_position.v_z_valid;
+	const bool ground_contact_trusted =  local_position_updated && vertical_velocity_valid;
+	const bool ground_contact = ground_contact_trusted && _ground_contact_hysteresis.get_state();
+
+	if (ground_contact_trusted) {
 		return _ground_contact_hysteresis.get_state();
 	}
 
+	return !_armed || (!minimum_thrust && !_freefall_hysteresis.get_state() && !_rotational_movement &&);
+
 	// Otherwise, landed if the system has minimum thrust (manual or in failsafe) and no rotation for at least 8 seconds
-	return (_min_thrust_start > 0) && ((time_now_us - _min_thrust_start) > 8_s);
+	return minimum_thrust_for_8_s;
 }
 
 bool MulticopterLandDetector::_get_landed_state()
