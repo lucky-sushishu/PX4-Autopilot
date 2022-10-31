@@ -217,7 +217,7 @@ void ActuatorEffectivenessHelicopter::setSaturationFlag(float coeff, bool &posit
 	}
 }
 
-void ActuatorEffectivenessHelicopter::getAllocatedAndUnallocatedControl(control_allocator_status_s &status,
+void ActuatorEffectivenessHelicopter::getUnallocatedControl(control_allocator_status_s &status,
 		int matrix_index)
 {
 

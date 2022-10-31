@@ -186,7 +186,7 @@ void ActuatorEffectivenessTiltrotorVTOL::setFlightPhase(const FlightPhase &fligh
 	}
 }
 
-void ActuatorEffectivenessTiltrotorVTOL::getAllocatedAndUnallocatedControl(control_allocator_status_s &status,
+void ActuatorEffectivenessTiltrotorVTOL::getUnallocatedControl(control_allocator_status_s &status,
 		int matrix_index)
 {
 	// only handle matrix 0 (motors and tilts)
