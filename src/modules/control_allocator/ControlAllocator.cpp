@@ -603,7 +603,7 @@ ControlAllocator::publish_control_allocator_status(int matrix_index)
 	control_allocator_status.unallocated_thrust[2] = unallocated_control(5);
 
 	// override control_allocator_status in customized saturation logic for certain effectiveness types
-	_actuator_effectiveness->getUnallocatedControl(control_allocator_status, matrix_index);
+	_actuator_effectiveness->getUnallocatedControl(matrix_index, control_allocator_status);
 
 	// Allocation success flags
 	control_allocator_status.torque_setpoint_achieved = (Vector3f(control_allocator_status.unallocated_torque[0],
